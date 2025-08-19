@@ -1,0 +1,72 @@
+<div class="auth-viewport">
+	<div class="auth-shell">
+		<!-- Panel 1: Generador -->
+		<div class="card auth-panel card-lg" aria-labelledby="gen-heading">
+			<h3 id="gen-heading" class="auth-title"><i class="bi bi-person-plus" style="font-size:1rem;"></i> 1. Generar Usuario</h3>
+			<p class="tip" style="margin-top:-.25rem">Pulsa para crear credenciales demo. Después podrás modificarlas antes de iniciar.</p>
+			<div class="form-stack">
+				<div class="inline">
+					  <button class="btn btn-primary" type="button" (click)="generate()" [disabled]="loading()">{{ loading() ? 'Cargando...' : 'Generar' }}</button>
+					  <button class="btn ghost-btn" type="button" (click)="autofill()" [disabled]="!candidate()">Auto completar</button>
+				</div>
+				<div class="status-box" *ngIf="loading()">Solicitando usuario...</div>
+			</div>
+			<div class="divider-text" *ngIf="candidate()">Usuario listo</div>
+			<div class="candidate-box" *ngIf="candidate() as c">
+				<div style="display:flex; flex-direction:column; gap:.3rem; font-size:.65rem;">
+					<strong style="font-size:.8rem;">{{ c.name }}</strong>
+					<span class="candidate-meta">{{ c.username }} • {{ c.email }}</span>
+					<span class="candidate-meta">PASS: {{ c.password }}</span>
+				</div>
+			</div>
+			<div class="tip" style="margin-top:auto;">Fuente: randomuser.me — No uses datos reales.</div>
+		</div>
+
+		<!-- Panel 2: Login -->
+			<div class="card auth-panel card-lg" aria-labelledby="login-heading">
+				<h3 id="login-heading" class="auth-title"><i class="bi bi-box-arrow-in-right" style="font-size:1rem;"></i> 2. Login</h3>
+			<p class="tip" style="margin-top:-.25rem">Modifica password para ver la fortaleza. Requiere usuario generado.</p>
+			<form (submit)="submit($event)" class="form-stack" novalidate>
+						<label style="display:flex; flex-direction:column; gap:.4rem;">
+							<span style="font-size:.6rem; font-weight:600; letter-spacing:.5px; text-transform:uppercase;">Username</span>
+							<div class="inline" style="align-items:stretch;">
+								<span class="btn" style="padding:.4rem .55rem; pointer-events:none; display:inline-flex; align-items:center; justify-content:center; font-size:.9rem;">
+									<i class="bi bi-person"></i>
+								</span>
+								<input style="flex:1;" type="text" [disabled]="!candidate() || loading()" [class.invalid]="attempt() && candidate() && !validUsername()" [ngModel]="username()" (ngModelChange)="username.set($event)" name="username" placeholder="{{ candidate()?.username || '' }}" />
+							</div>
+						</label>
+				<label style="display:flex; flex-direction:column; gap:.4rem;">
+					<span style="font-size:.6rem; font-weight:600; letter-spacing:.5px; text-transform:uppercase;">Password (>=4)</span>
+								<div class="inline" style="align-items:stretch;">
+									<span class="btn" style="padding:.4rem .55rem; pointer-events:none; display:inline-flex; align-items:center; justify-content:center; font-size:.85rem;">
+										<i class="bi bi-key"></i>
+									</span>
+									<input style="flex:1;" [type]="showPw() ? 'text' : 'password'" [disabled]="!candidate() || loading()" [class.invalid]="attempt() && !validPassword()" [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" />
+									<button type="button" class="btn ghost-btn" (click)="toggleShowPw()" [disabled]="!candidate()" [attr.aria-label]="showPw() ? 'Ocultar password' : 'Mostrar password'" style="font-size:.6rem; display:inline-flex; align-items:center; justify-content:center;">
+										<i class="bi" [class.bi-eye]="!showPw()" [class.bi-eye-slash]="showPw()"></i>
+									</button>
+								</div>
+					<div class="tip" *ngIf="candidate()?.password && !password()">Sugerido: <code>{{ candidate()?.password }}</code></div>
+					<div *ngIf="password()" style="margin-top:.25rem;">
+						<div style="display:flex; align-items:center; gap:.6rem;">
+							<div style="flex:1; display:flex; gap:.3rem;">
+								<span *ngFor="let _ of [0,1,2,3,4]; let i=index" [style]="'flex:1; height:6px; border-radius:2px; background:' + (i < pwStrength() ? strengthColors[pwStrength()] : 'var(--color-border)')"></span>
+							</div>
+							<span [style]="'font-size:.55rem; font-weight:600; letter-spacing:.5px; color:' + strengthColors[pwStrength()]">{{ strengthLabels[pwStrength()] }}</span>
+						</div>
+					</div>
+				</label>
+				<div class="inline">
+								  <button type="submit" class="btn btn-primary" [disabled]="loading() || !candidate()">{{ loading() ? 'Entrando...' : 'Entrar' }}</button>
+				</div>
+							<p *ngIf="error()" role="alert" style="color:var(--color-danger); font-size:.6rem; margin:0;">{{ error() }}</p>
+					<p *ngIf="attempt() && !error() && candidate() && !validUsername()" style="color:var(--color-danger); font-size:.55rem; margin:0;">Username no coincide.</p>
+					<p *ngIf="attempt() && !error() && candidate() && !validPassword()" style="color:var(--color-danger); font-size:.55rem; margin:0;">Password no coincide.</p>
+					<p *ngIf="attempt() && !error() && canSubmit()" style="font-size:.55rem; display:flex; align-items:center; gap:.35rem; color:var(--color-success); font-weight:600; letter-spacing:.5px;">
+							<i class="bi bi-shield-check" style="font-size:.8rem;"></i> Listo para enviar.
+						</p>
+			</form>
+		</div>
+	</div>
+</div>

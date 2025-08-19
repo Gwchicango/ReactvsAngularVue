@@ -1,0 +1,105 @@
+<div class="home-wrapper" *ngIf="user as u; else noUser">
+	<header class="dashboard-header">
+		<h1 class="h2">Dashboard</h1>
+		<p class="dashboard-sub">Resumen compacto del usuario activo, credenciales demo, localización y acciones rápidas.</p>
+		<div class="actions-row">
+			<a routerLink="/posts" class="btn btn-primary"><i class="bi bi-journal-text"></i> Ver Posts</a>
+			<a routerLink="/login" class="btn"><i class="bi bi-person-circle"></i> Cambiar Usuario</a>
+		</div>
+	</header>
+
+	<div class="dashboard-layout">
+		<div class="stack">
+			<!-- Stat cards -->
+			<div class="stat-cards">
+				<div class="stat-card">
+					<div class="stat-label">Nacionalidad</div>
+					<div class="stat-value"><i class="bi bi-globe2"></i> {{ u.raw.nat }}</div>
+					<div class="stat-trend trend-flat">Dato base</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-label">Zona Horaria</div>
+						<div class="stat-value"><i class="bi bi-clock"></i> {{ u.raw.location.timezone.offset }}</div>
+					<div class="stat-trend trend-flat">{{ u.raw.location.timezone.description | slice:0:38 }}</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-label">Ubicación</div>
+					<div class="stat-value"><i class="bi bi-geo-alt"></i> {{ u.raw.location.country }}</div>
+					<div class="stat-trend trend-flat">{{ u.raw.location.city }}</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-label">Password score</div>
+					  <div class="stat-value"><i class="bi bi-key"></i> {{ passStrength() }}/5</div>
+					<div class="stat-trend trend-flat">Heurístico</div>
+				</div>
+			</div>
+
+			<!-- User summary -->
+			<div class="card panel">
+				<div class="panel-title"><i class="bi bi-person-badge"></i> Usuario</div>
+				<div class="user-summary">
+					<img *ngIf="u.raw.picture?.large" [src]="u.raw.picture.large" [alt]="u.name" />
+					<div class="user-info">
+						<strong class="user-name">{{ u.name }}</strong>
+						<span class="user-email">{{ u.email }}</span>
+						<ul class="list-inline">
+							<li><i class="bi bi-shield-check"></i> <span>{{ u.id }}</span></li>
+							<li><i class="bi bi-clock"></i> <span>{{ u.raw.location.timezone.offset }} {{ u.raw.location.timezone.description }}</span></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+
+			<!-- Credentials -->
+			<div class="card panel">
+				<div class="panel-title"><i class="bi bi-key"></i> Credenciales (Demo)</div>
+				<div class="credentials-box">
+					<div class="cred-chip">
+						<strong>USER</strong> {{ u.username }}
+									<button class="copy-btn" type="button" (click)="copy('user', u.username)">
+										<i class="bi" [class.bi-check]="copied()==='user'" [class.bi-clipboard]="copied()!=='user'"></i>
+						</button>
+					</div>
+					<div class="cred-chip">
+						<strong>PASS</strong> {{ u.password }}
+									<button class="copy-btn" type="button" (click)="copy('pass', u.password)">
+										<i class="bi" [class.bi-check]="copied()==='pass'" [class.bi-clipboard]="copied()!=='pass'"></i>
+						</button>
+					</div>
+				</div>
+				<div class="security-meter">
+					<div class="meter-bars">
+						<span *ngFor="let _ of bars; let i = index" [class.active]="i < passStrength()"></span>
+					</div>
+					<span class="meter-label">Score</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Right column -->
+		<div class="stack">
+			<div class="card panel">
+				<div class="panel-title"><i class="bi bi-geo"></i> Localización</div>
+				<div class="location-box">
+					<div><i class="bi bi-geo"></i> {{ u.raw.location.street.number }} {{ u.raw.location.street.name }}</div>
+					<div><i class="bi bi-geo"></i> {{ u.raw.location.city }}, {{ u.raw.location.state }}</div>
+					<div><i class="bi bi-globe2"></i> {{ u.raw.location.country }} ({{ u.raw.location.postcode }})</div>
+					<div><i class="bi bi-geo"></i> Lat: {{ u.raw.location.coordinates.latitude }} / Lng: {{ u.raw.location.coordinates.longitude }}</div>
+					<div><i class="bi bi-clock"></i> {{ u.raw.location.timezone.offset }} {{ u.raw.location.timezone.description }}</div>
+				</div>
+			</div>
+			<div class="card panel">
+				<div class="panel-title"><i class="bi bi-lightning-charge"></i> Acciones Rápidas</div>
+				<div class="actions-row">
+					<a routerLink="/posts" class="btn btn-primary"><i class="bi bi-journal-text"></i> Posts</a>
+					<a routerLink="/login" class="btn"><i class="bi bi-person-plus"></i> Nuevo Usuario</a>
+					<a routerLink="/login" class="btn"><i class="bi bi-arrow-repeat"></i> Regenerar</a>
+				</div>
+				<p class="tip">La regeneración te lleva a login para obtener otro usuario aleatorio.</p>
+			</div>
+		</div>
+	</div>
+</div>
+<ng-template #noUser>
+	<p class="text-muted" style="font-size:.75rem;">No hay usuario activo.</p>
+</ng-template>

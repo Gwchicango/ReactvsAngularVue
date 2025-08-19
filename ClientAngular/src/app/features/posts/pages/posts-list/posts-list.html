@@ -1,0 +1,136 @@
+<div class="posts-wrapper">
+	@if (error(); as err) {
+		<div class="error-banner fade-in" role="alert">
+			<span>{{ err }}</span>
+			<button class="btn mini-btn" (click)="dismissError()" aria-label="Cerrar">×</button>
+		</div>
+	}
+
+	<div class="posts-toolbar">
+		<h2 class="h2" style="margin:0 1rem 0 0">Registros</h2>
+		<div class="posts-actions">
+			<button class="btn" (click)="load()" [disabled]="loading()">⟳ Refrescar</button>
+			<button class="btn btn-primary" (click)="openCreate()">＋ Nuevo</button>
+			<div class="filter-box" style="align-items:flex-end">
+				<label style="display:flex; flex-direction:column; font-size:.55rem">
+					<span style="margin-bottom:.25rem">Filtrar userId</span>
+					  <input style="width:110px" placeholder="ej: 1" [value]="filterUser()" (input)="onFilterUserInput($event)" />
+				</label>
+				<label style="display:flex; flex-direction:column; font-size:.55rem">
+					<span style="margin-bottom:.25rem">Buscar título</span>
+					  <input style="width:180px" placeholder="texto..." [value]="searchTerm()" (input)="onSearchTitleInput($event)" />
+				</label>
+				@if (filterUser() || searchTerm()) {
+					<button class="btn mini-btn" (click)="filterUser.set(''); searchTerm.set('')">Limpiar</button>
+				}
+			</div>
+		</div>
+	</div>
+
+	@if (loading()) {
+		<div class="skeleton-grid" aria-hidden="true">
+			@for (item of [0,1,2,3,4,5]; track item) {
+				<div class="skeleton-card"></div>
+			}
+		</div>
+	}
+
+	@if (!loading() && posts().length === 0) {
+		<p class="empty">Sin resultados.</p>
+	}
+
+	<ul class="posts-list">
+		@for (p of posts(); track p.id) {
+			<li class="post-item">
+				@if (!(editingId() === p.id) && !(quickEditId() === p.id)) {
+					<h3 [title]="'ID '+p.id">{{ p.title }}</h3>
+				}
+				@if (quickEditId() === p.id && editingId() !== p.id) {
+					<div class="quick-edit-row">
+						<input [value]="quickTitle()" (input)="onQuickTitleInput($event)" autofocus />
+						<button class="btn mini-btn" [disabled]="busyIds().has(p.id!)" (click)="submitQuickTitle(p)">✔</button>
+						<button class="btn mini-btn" (click)="quickEditId.set(null)">×</button>
+					</div>
+				}
+				@if (editingId() === p.id) {
+					<div class="inline-edit">
+						<input [value]="editForm().title" (input)="onEditTitleInput($event)" />
+						<textarea [value]="editForm().body" (input)="onEditBodyInput($event)"></textarea>
+					</div>
+				}
+				@if (editingId() !== p.id) {
+					<p>{{ p.body }}</p>
+				}
+				@if (editingId() === p.id) {
+					<p class="muted" style="font-size:.6rem">Editando ID {{ p.id }}</p>
+				}
+				<footer>
+					<span class="chip">user {{ p.userId }}</span>
+					<div class="post-actions">
+						@if (editingId() !== p.id && quickEditId() !== p.id) {<button class="btn mini-btn" [disabled]="busyIds().has(p.id!)" (click)="patchTitle(p)" title="Editar título rápido">✎</button>}
+						@if (editingId() !== p.id) {<button class="btn mini-btn" [disabled]="busyIds().has(p.id!)" (click)="startEdit(p)" title="Editar completo">✚</button>}
+						@if (editingId() === p.id) {<button class="btn mini-btn" (click)="submitEdit()" [disabled]="busyIds().has(p.id!)">✔</button>}
+						@if (editingId() === p.id) {<button class="btn mini-btn" (click)="cancelEdit()">×</button>}
+						<button class="btn mini-btn" [disabled]="busyIds().has(p.id!)" (click)="confirmDelete(p.id!)" title="Eliminar">🗑</button>
+					</div>
+				</footer>
+			</li>
+		}
+	</ul>
+
+	@if (showOverlay()) {
+		<div class="loading-overlay" role="status" aria-live="polite">
+			<div class="loader"></div>
+			<p>Cargando...</p>
+		</div>
+	}
+
+	@if (showCreateModal()) {
+		<div class="modal-backdrop" role="dialog" aria-modal="true" aria-label="Crear Post">
+			<form class="modal create-modal" (submit)="handleCreate($event)">
+				<div class="modal-header">
+					<h3>Nuevo Registro</h3>
+					<button type="button" class="btn mini-btn modal-close" (click)="closeCreate()">×</button>
+				</div>
+				<div class="create-modal-grid">
+					<div class="field-group full">
+						<span class="label-text">Título</span>
+						<input placeholder="Título descriptivo" [value]="form().title" (input)="onCreateTitleInput($event)" required autofocus />
+						<div class="helper">Máx. 120 caracteres (demo, no validado)</div>
+					</div>
+					<div class="field-group full">
+						<span class="label-text">Contenido</span>
+						<textarea placeholder="Escribe el cuerpo del post" [value]="form().body" (input)="onCreateBodyInput($event)" required></textarea>
+						<div class="helper">Puedes poner texto libre. JSONPlaceholder simula el guardado.</div>
+					</div>
+					<div class="field-group" style="max-width:140px">
+						<span class="label-text">User ID</span>
+						<input type="number" min="1" [value]="form().userId" (input)="onCreateUserIdInput($event)" />
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn" (click)="closeCreate()">Cancelar</button>
+						<button class="btn btn-primary" [disabled]="creating()">{{ creating() ? 'Creando...' : 'Guardar' }}</button>
+				</div>
+			</form>
+		</div>
+	}
+
+	@if (showDelete() !== null) {
+		<div class="modal-backdrop" role="dialog" aria-modal="true" aria-label="Confirmar Eliminación">
+			<div class="modal">
+				<div class="modal-header">
+					<h3>Eliminar Post</h3>
+					<button type="button" class="btn mini-btn modal-close" (click)="cancelDelete()">×</button>
+				</div>
+				<div class="danger-zone">
+					Esta acción (fake) eliminará el post con ID <strong>{{ showDelete() }}</strong> localmente.
+				</div>
+				<div class="modal-footer">
+					<button class="btn" type="button" (click)="cancelDelete()">Cancelar</button>
+					<button class="btn btn-danger" type="button" (click)="del(showDelete()!)">Eliminar</button>
+				</div>
+			</div>
+		</div>
+	}
+</div>
