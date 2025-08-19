@@ -19,6 +19,8 @@ export class Login {
   password = signal('');
   showPw = signal(false);
   error = signal<string | null>(null);
+  copiedUser = signal(false);
+  copiedPass = signal(false);
 
   // Password strength evaluation (0-5)
   pwStrength = computed(() => {
@@ -64,6 +66,22 @@ export class Login {
   }
 
   toggleShowPw() { this.showPw.update(v => !v); }
+
+  private triggerFlag(sig: ReturnType<typeof signal>) {
+    sig.set(true);
+    setTimeout(()=>sig.set(false), 1200);
+  }
+
+  async copyUsername() {
+    const value = this.username() || this.candidate()?.username;
+    if (!value) return;
+    try { await navigator.clipboard.writeText(value); this.triggerFlag(this.copiedUser); } catch {}
+  }
+  async copyPassword() {
+    const value = this.password() || this.candidate()?.password;
+    if (!value) return;
+    try { await navigator.clipboard.writeText(value); this.triggerFlag(this.copiedPass); } catch {}
+  }
 
   autofill() {
     const c = this.candidate();
