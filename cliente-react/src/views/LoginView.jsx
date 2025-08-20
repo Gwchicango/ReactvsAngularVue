@@ -1,16 +1,20 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { loginWithCredentials } from '../controllers/authController'
 import './auth.css'
 import { PiSignInBold, PiLockKeyBold, PiUserBold, PiEyeBold, PiEyeSlashBold, PiShieldCheckBold } from 'react-icons/pi'
 
-export function LoginView({ candidate, onSuccess, large }) {
+export function LoginView({ onSuccess, large }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [showPw, setShowPw] = useState(false)
 
-  const disabled = !candidate || !username || !password
+  // Validation regex
+  const usernameValid = useMemo(() => /^[a-zA-Z0-9]+$/.test(username), [username])
+  const canSubmit = username && password && usernameValid
+
+  const disabled = !canSubmit || loading
 
   // Simple password strength evaluation
   const pwStrength = (() => {
@@ -28,21 +32,15 @@ export function LoginView({ candidate, onSuccess, large }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true); setError(null)
+    setError(null)
+    if (!usernameValid) {
+      setError('El usuario solo puede contener letras y números.')
+      return
+    }
+    setLoading(true)
     try {
-      const backendUser = await loginWithCredentials(username, password, candidate)
-      // Fusionar datos del backend y del candidato randomuser
-      const mergedUser = {
-        ...backendUser,
-        // Si candidate existe, agregamos datos visuales
-        ...(candidate ? {
-          name: candidate.name,
-          picture: candidate.picture,
-          raw: candidate.raw,
-          password: candidate.password
-        } : {})
-      }
-      onSuccess(mergedUser)
+      const backendUser = await loginWithCredentials(username, password)
+      onSuccess(backendUser)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -52,16 +50,16 @@ export function LoginView({ candidate, onSuccess, large }) {
 
   return (
   <div className={`card auth-panel ${large ? 'card-lg':''}`} aria-labelledby="login-heading">
-      <h3 id="login-heading" className="auth-title"><PiSignInBold /> 2. Login</h3>
-      <p className="text-muted" style={{fontSize:'.7rem', marginTop:'-0.35rem'}}>Usa las credenciales generadas o modifica la password para ver su fortaleza.</p>
-      {!candidate && <p className="text-muted" style={{fontSize:'.75rem'}}>Primero genera un usuario.</p>}
+  <h3 id="login-heading" className="auth-title"><PiSignInBold /> Login</h3>
+  <p className="text-muted" style={{fontSize:'.7rem', marginTop:'-0.35rem'}}>Ingresa tus credenciales para acceder.</p>
       <form onSubmit={handleSubmit} className="form-stack">
         <label>
           Username
           <div className="inline" style={{alignItems:'stretch'}}>
             <span className="btn" style={{padding:'.4rem .55rem', pointerEvents:'none'}}><PiUserBold /></span>
-            <input value={username} onChange={e=>setUsername(e.target.value)} placeholder={candidate?.username || ''} disabled={!candidate || loading} />
+            <input value={username} onChange={e=>setUsername(e.target.value)} placeholder="Usuario" disabled={loading} />
           </div>
+          {username && !usernameValid && <div className="tip" style={{color:'var(--color-danger)'}}>Solo letras y números.</div>}
         </label>
         <label>
           Password (&gt;=4)
@@ -71,14 +69,14 @@ export function LoginView({ candidate, onSuccess, large }) {
               type={showPw ? 'text':'password'}
               value={password}
               onChange={e=>setPassword(e.target.value)}
-              disabled={!candidate || loading}
+              disabled={loading}
               aria-describedby="pw-help pw-strength"
             />
             <button type="button" className="btn" style={{padding:'.4rem .55rem'}} onClick={()=>setShowPw(s=>!s)} aria-label={showPw ? 'Ocultar password':'Mostrar password'}>
               {showPw ? <PiEyeSlashBold /> : <PiEyeBold />}
             </button>
           </div>
-          {candidate?.password && !password && <div className="tip" id="pw-help">Password sugerido: <code>{candidate.password}</code></div>}
+          {/* Password suggestion removed: no candidate */}
           {password && (
             <div style={{marginTop:'.4rem'}} id="pw-strength" aria-live="polite">
               <div style={{display:'flex', alignItems:'center', gap:'.5rem'}}>
@@ -93,13 +91,12 @@ export function LoginView({ candidate, onSuccess, large }) {
           )}
         </label>
         <div className="inline gap-md">
-          <button type="button" className="btn ghost-btn" disabled={!candidate || loading} onClick={()=>{ setUsername(candidate?.username||''); setPassword(candidate?.password||'') }}>Auto completar</button>
-          <button className="btn btn-primary" type="submit" disabled={disabled || loading}>
+          <button className="btn btn-primary" type="submit" disabled={disabled}>
             {loading ? <span className="inline"><span className="loader" /> Autenticando...</span> : 'Entrar'}
           </button>
         </div>
         {error && <p role="alert" style={{color:'var(--color-danger)', margin:0}}>{error}</p>}
-        {!error && candidate && username && password && !loading && (
+        {!error && canSubmit && !loading && (
           <p className="text-muted" style={{fontSize:'.6rem', display:'flex', alignItems:'center', gap:'.35rem'}}><PiShieldCheckBold /> Listo para enviar.</p>
         )}
       </form>

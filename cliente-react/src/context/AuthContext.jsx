@@ -12,7 +12,6 @@ export function AuthProvider({ children }) {
       return null
     }
   })
-  const [candidate, setCandidate] = useState(null)
 
   const login = useCallback(u => {
     setUser(u)
@@ -24,7 +23,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('auth_user')
   }, [])
 
-  const value = { user, candidate, setCandidate, login, logout }
+  const value = { user, login, logout }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

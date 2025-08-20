@@ -1,7 +1,8 @@
 import { Routes, Route, Navigate, Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { useState } from 'react'
 import { PostsView } from './views/PostsView'
 import { LoginView } from './views/LoginView'
-import { UserGeneratorView } from './views/UserGeneratorView'
+import { RegisterView } from './views/RegisterView'
 import { HomeView } from './views/HomeView'
 import { useAuth } from './context/AuthContext'
 
@@ -12,8 +13,9 @@ function Protected({ children }) {
 }
 
 function AuthPage() {
-  const { candidate, setCandidate, login } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
+  const [showRegister, setShowRegister] = useState(false)
 
   const handleSuccess = (user) => {
     login(user)
@@ -23,8 +25,21 @@ function AuthPage() {
   return (
     <div className="auth-viewport">
       <div className="auth-shell">
-        <UserGeneratorView onCandidate={setCandidate} large />
-        <LoginView candidate={candidate} onSuccess={handleSuccess} large />
+        {showRegister ? (
+          <div style={{position:'relative'}}>
+            <RegisterView onSuccess={handleSuccess} large />
+            <div style={{display:'flex', justifyContent:'center'}}>
+              <button className="btn ghost-btn" style={{marginTop:'1rem'}} onClick={()=>setShowRegister(false)}>¿Ya tienes cuenta? Inicia sesión</button>
+            </div>
+          </div>
+        ) : (
+          <div style={{position:'relative'}}>
+            <LoginView onSuccess={handleSuccess} large />
+            <div style={{display:'flex', justifyContent:'center'}}>
+              <button className="btn ghost-btn" style={{marginTop:'1rem'}} onClick={()=>setShowRegister(true)}>¿No tienes cuenta? Regístrate</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
