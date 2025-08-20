@@ -1,11 +1,14 @@
 
 import { User } from '../models/User'
 
-const BASE_URL = 'http://localhost:3000'
+const BASE_URL = import.meta.env.VITE_BACKEND_URL
+
+const API_URL = import.meta.env.VITE_API_URL
 
 // Obtiene un usuario candidato aleatorio y lo registra en la BD
 export async function fetchRandomUserCandidate() {
-  const res = await fetch('https://randomuser.me/api/')
+  console.log('API_URL:', API_URL);
+  const res = await fetch(`${API_URL}/api/`)
   if (!res.ok) throw new Error('No se pudo obtener usuario')
   const data = await res.json()
   const rawUser = data.results?.[0]

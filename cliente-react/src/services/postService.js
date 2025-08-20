@@ -1,3 +1,8 @@
+import { Post } from '../models/Post'
+
+const API_URL = import.meta.env.VITE_API_URL_POST
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+
 // --- MÉTODOS FALTANTES PARA API EXTERNA ---
 export async function updateApiPost({ id, title, body, userId }) {
   const res = await fetch(`${API_URL}/posts/${id}`, {
@@ -27,10 +32,8 @@ export async function deleteApiPost(id) {
   return true // JSONPlaceholder finge el delete
 }
 
-import { Post } from '../models/Post'
 
-const API_URL = 'https://jsonplaceholder.typicode.com'
-const BACKEND_URL = 'http://localhost:3000'
+
 
 // --- POSTS DEL BACKEND ---
 export async function fetchBackendPosts() {
