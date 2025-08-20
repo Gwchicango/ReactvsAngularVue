@@ -17,37 +17,19 @@ export class AuthService {
     try { const raw = localStorage.getItem(STORAGE_KEY); return raw? JSON.parse(raw): null; } catch { return null; }
   }
 
-  // Obtiene un usuario candidato aleatorio y lo registra en el backend
-  async generateCandidate(): Promise<DemoUser> {
-    const res = await fetch(`${environment.API_URL}/api/?nat=us,es`);
-    if (!res.ok) throw new Error('No se pudo obtener usuario');
-    const data = await res.json();
-    const r = data.results[0];
-    this.lastRaw = r; // Guardar para login
-    const user: DemoUser = {
-      id: r.login.uuid,
-      name: `${r.name.first} ${r.name.last}`,
-      username: r.login.username,
-      email: r.email,
-      password: r.login.password,
-      raw: r
-    };
-    // Registrar en backend
+  // Registro manual de usuario
+  async register(username: string, password: string, email: string): Promise<DemoUser> {
     const regRes = await fetch(`${environment.BACKEND_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: user.username,
-        password: user.password,
-        email: user.email
-      })
+      body: JSON.stringify({ username, password, email })
     });
     if (!regRes.ok) {
       const err = await regRes.json().catch(()=>({error:'Error'}));
       throw new Error(err.error || 'Error registrando usuario en backend');
     }
     const dbUser = await regRes.json();
-    return { ...user, id: dbUser.id, dbUser };
+    return { ...dbUser };
   }
 
   // Login real contra backend, fusionando datos del API si existen

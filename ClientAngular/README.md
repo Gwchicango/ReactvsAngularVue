@@ -136,6 +136,31 @@ Se incluyen atributos `aria-label` en navegación y uso de botones correctos par
 - JSONPlaceholder API: https://jsonplaceholder.typicode.com
 - Random User API: https://randomuser.me
 
+## 16. Integración con Backend propio
+
+La aplicación Angular está integrada con un backend Node/Express propio para autenticación y gestión de posts, además de consumir la API pública randomuser.me y JSONPlaceholder.
+
+- **Autenticación:**
+  - El login y registro de usuario se realiza contra el backend (`/auth/register`, `/auth/login`).
+  - Al generar un usuario, primero se obtiene un candidato desde randomuser.me y luego se registra automáticamente en el backend.
+  - El backend devuelve el usuario con su `id` propio, que se usa para asociar los posts locales.
+
+- **Posts:**
+  - Los posts pueden provenir tanto del backend propio como de la API externa (JSONPlaceholder).
+  - Los registros locales (backend) se filtran automáticamente por el usuario logueado.
+  - Al crear un post, el `userId` se asigna automáticamente con el id del usuario autenticado.
+
+- **Configuración de URLs:**
+  - Las URLs del backend y de las APIs externas están definidas en los archivos de entorno (`src/environments/environment.ts`).
+  - Puedes cambiar la URL del backend para apuntar a tu servidor local o remoto según el entorno.
+
+- **Flujo resumido:**
+  1. Usuario se registra/loguea → backend valida y responde con datos + id.
+  2. Dashboard y posts usan ese id para mostrar y crear registros asociados.
+  3. Los datos enriquecidos del usuario (perfil randomuser) se muestran en dashboard y nav si están disponibles.
+
+> Para más detalles sobre el backend, revisa la carpeta correspondiente en el monorepo o el README del backend.
+
 ---
 
 © 2025 ClientAngular – Proyecto educativo / demostración.
