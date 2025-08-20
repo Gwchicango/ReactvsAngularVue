@@ -87,8 +87,28 @@ label { font-size: .8rem; font-weight: 500; text-transform: uppercase; letter-sp
 .app-header { backdrop-filter: blur(6px); background: linear-gradient(90deg,var(--color-surface),var(--color-bg-alt)); border-bottom: 1px solid var(--color-border); position: sticky; top:0; z-index:10; }
 .app-header-inner { height: 58px; }
 .brand { font-weight: 600; font-size: 1rem; }
-.nav a { font-size: .85rem; padding: .4rem .6rem; border-radius: var(--radius-sm); }
-.nav a:hover { background: var(--color-bg-alt); }
+.nav a { font-size: .85rem; padding: .4rem .6rem; border-radius: var(--radius-sm); color:#fff; }
+.nav a:hover { background: rgba(255,255,255,0.12); color:#fff; }
+
+/* Nav links as buttons */
+/* Active nav pill */
+/* Active nav pill (contraste con fondo oscuro, mantiene texto oscuro para diferenciar) */
+.btn-nav {
+  display:inline-flex; align-items:center; gap:.4rem;
+  background: rgba(255,255,255,0.16); /* menos blanco, más transparente */
+  backdrop-filter: blur(6px);
+  color: var(--color-text) !important; /* Texto oscuro dentro de la píldora clara */
+  padding: .45rem .85rem;
+  border:none; /* sin borde */
+  border-radius: var(--radius-md);
+  font-weight:600;
+  font-size:.75rem;
+  letter-spacing:.5px;
+  line-height:1.1;
+  box-shadow: var(--shadow-sm);
+}
+/* Evitar cambio de color en hover del activo */
+.nav a.btn-nav:hover { background: rgba(255,255,255,0.16); }
 
 /* Utilities */
 .hidden { display:none !important; }

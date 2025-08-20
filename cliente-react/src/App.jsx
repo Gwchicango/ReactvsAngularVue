@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { PostsView } from './views/PostsView'
 import { LoginView } from './views/LoginView'
 import { UserGeneratorView } from './views/UserGeneratorView'
@@ -33,14 +33,16 @@ function AuthPage() {
 function Layout({ children }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const isPosts = location.pathname.startsWith('/posts')
   const handleLogout = () => { logout(); navigate('/auth', { replace: true }) }
   return (
     <>
       <header className="app-header">
         <div className="app-header-inner container flex justify-between items-center gap-md">
           <nav className="nav flex gap-md items-center">
-            <Link to="/Home" className="brand">Home</Link>
-            <Link to="/posts">Registro</Link>
+            <NavLink to="/Home" className={({isActive})=>`brand ${isActive? 'btn-nav active':''}`}>HOME</NavLink>
+            <NavLink to="/posts" className={({isActive})=>`${isActive? 'btn-nav active':''}`}>REGISTRO</NavLink>
           </nav>
           <div className="flex items-center gap-md" style={{fontSize:'.75rem'}}>
             {user?.picture && <img src={user.picture} width={34} height={34} style={{borderRadius:'50%'}} alt={user.name} />}
@@ -49,7 +51,7 @@ function Layout({ children }) {
           </div>
         </div>
       </header>
-      <main className="container">{children}</main>
+  <main className={isPosts ? 'posts-full' : 'container'}>{children}</main>
     </>
   ) 
 }
