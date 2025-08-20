@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
-import { getInitialPosts, addPost, removePost, putPost, partialUpdatePost, getPostsByUser, searchPosts } from '../controllers/postController'
+import { useAuth } from '../context/AuthContext'
+import { getInitialPosts, addPost, removePost, putBackendPost, putApiPost, partialUpdatePost, getPostsByUser, searchPosts } from '../controllers/postController'
 import './posts.css'
 import { PiPlusBold, PiTrashBold, PiPencilBold, PiCheckBold, PiXBold, PiArrowsClockwiseBold } from 'react-icons/pi'
 
 export function PostsView() {
+  const { user } = useAuth()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [form, setForm] = useState({ title:'', body:'', userId:1 })
+  const [form, setForm] = useState({ title:'', body:'', userId: user?.id || 1 })
   const [editingId, setEditingId] = useState(null)
-  const [editForm, setEditForm] = useState({ title:'', body:'', userId:1 })
+  const [editForm, setEditForm] = useState({ title:'', body:'', userId: user?.id || 1 })
   const [filterUser, setFilterUser] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -36,6 +38,7 @@ export function PostsView() {
       setPosts(data)
     } catch (e) {
       setError(e.message)
+      console.error('Error en load():', e)
     } finally {
       setLoading(false); setTimeout(()=>setShowOverlay(false), 300)
     }
@@ -53,14 +56,18 @@ export function PostsView() {
     e.preventDefault()
     try {
       setCreating(true)
-      const newPost = await addPost(form)
+      const newPost = await addPost({ ...form, userId: user?.id || 1 })
       setPosts(p => [newPost, ...p])
-      setForm({ title:'', body:'', userId: form.userId })
+      setForm({ title:'', body:'', userId: user?.id || 1 })
       setShowCreateModal(false)
     } catch (e) {
       setError(e.message)
     } finally { setCreating(false) }
   }
+  // Si cambia el usuario, actualiza el userId del form
+  useEffect(() => {
+    setForm(f => ({ ...f, userId: user?.id || 1 }))
+  }, [user])
 
   const startEdit = (p) => {
     setEditingId(p.id)
@@ -72,8 +79,12 @@ export function PostsView() {
   const submitEdit = async () => {
     try {
       setBusyIds(s => new Set([...s, editingId]))
-      const updated = await putPost(editForm)
-      setPosts(list => list.map(p => p.id === updated.id ? updated : p))
+      if (editForm.raw) {
+        await putApiPost(editForm)
+      } else {
+        await putBackendPost(editForm)
+      }
+      await load();
       setEditingId(null)
     } catch (e) { setError(e.message) }
     finally { setBusyIds(s => { s.delete(editingId); return new Set(s) }) }
@@ -137,20 +148,45 @@ export function PostsView() {
 
       {posts.length === 0 && !loading && <p className="empty">Sin resultados.</p>}
 
+      {/* Lista de posts del backend (sin raw) */}
+      <h3 style={{
+        margin:'1.8rem 0 .7rem',
+        color:'#fff',
+        fontWeight:800,
+        fontSize:'1.35rem',
+        background:'linear-gradient(90deg,#334155 80%,#475569 100%)',
+        padding:'10px 22px',
+        borderRadius:'10px',
+        boxShadow:'0 2px 12px #33415522',
+        letterSpacing:'.5px',
+        display:'flex',
+        alignItems:'center',
+        gap:'10px',
+        textShadow:'0 2px 8px #0002'
+      }}>
+        <span style={{fontSize:'1.5em',opacity:.85,verticalAlign:'middle'}}>🏠</span>
+        Registros de Servicio local
+      </h3>
       <ul className="posts-list">
-        {posts.map(p => {
+        {(() => {
+          // Filtrar solo posts del backend, con id único (evitar duplicados por id)
+          const seen = new Set();
+          const backendPosts = posts.filter(p => {
+            if (p.raw) return false;
+            if (String(p.userId) !== String(user?.id)) return false;
+            if (seen.has(String(p.id))) return false;
+            seen.add(String(p.id));
+            return true;
+          });
+          if (backendPosts.length === 0) {
+            return <li className="post-item" style={{textAlign:'center', color:'#64748b', fontWeight:600, fontSize:'1rem'}}>No hay registros</li>;
+          }
+          return backendPosts.map(p => {
           const busy = busyIds.has(p.id)
           const editing = editingId === p.id
           return (
             <li key={p.id} className="post-item">
-              {!editing && quickEditId !== p.id && <h3 title={`ID ${p.id}`}>{p.title}</h3>}
-              {quickEditId === p.id && !editing && (
-                <div className="quick-edit-row">
-                  <input value={quickTitle} onChange={e=>setQuickTitle(e.target.value)} autoFocus />
-                  <button className="btn mini-btn" disabled={busy} onClick={()=>submitQuickTitle(p)}><PiCheckBold /></button>
-                  <button className="btn mini-btn" onClick={()=>setQuickEditId(null)}><PiXBold /></button>
-                </div>
-              )}
+              <h3 title={`ID ${p.id}`}>{p.title}</h3>
               {editing && (
                 <div className="inline-edit">
                   <input value={editForm.title} onChange={e=>setEditForm(f=>({...f,title:e.target.value}))} />
@@ -162,8 +198,9 @@ export function PostsView() {
               <footer>
                 <span className="chip">user {p.userId}</span>
                 <div className="post-actions">
-                  {!editing && quickEditId !== p.id && <button className="btn mini-btn" disabled={busy} onClick={()=>patchTitle(p)} title="Editar título rápido"><PiPencilBold /></button>}
-                  {!editing && <button className="btn mini-btn" disabled={busy} onClick={()=>startEdit(p)} title="Editar completo"><PiCheckBold style={{transform:'rotate(45deg)'}} /></button>}
+                  {/* Solo dejar edición completa en posts del backend */}
+                  {/* Solo permitir edición completa en posts del backend */}
+                  {!editing && !p.raw && <button className="btn mini-btn" disabled={busy} onClick={()=>startEdit(p)} title="Editar completo"><PiCheckBold style={{transform:'rotate(45deg)'}} /></button>}
                   {editing && <button className="btn mini-btn" onClick={submitEdit} disabled={busy}><PiCheckBold /></button>}
                   {editing && <button className="btn mini-btn" onClick={cancelEdit}><PiXBold /></button>}
                   <button className="btn mini-btn" disabled={busy} onClick={()=>setShowDelete(p.id)} title="Eliminar"><PiTrashBold /></button>
@@ -171,7 +208,75 @@ export function PostsView() {
               </footer>
             </li>
           )
-        })}
+          })
+        })()}
+      </ul>
+
+      {/* Línea divisoria */}
+      {/* Lista de posts del API (con raw) */}
+      <h3 style={{
+        margin:'1.8rem 0 .7rem',
+        color:'#fff',
+        fontWeight:800,
+        fontSize:'1.35rem',
+        background:'linear-gradient(90deg,#64748b 80%,#94a3b8 100%)',
+        padding:'10px 22px',
+        borderRadius:'10px',
+        boxShadow:'0 2px 12px #64748b22',
+        letterSpacing:'.5px',
+        display:'flex',
+        alignItems:'center',
+        gap:'10px',
+        textShadow:'0 2px 8px #0002'
+      }}>
+        <span style={{fontSize:'1.5em',opacity:.85,verticalAlign:'middle'}}>🌐</span>
+        Registros del API público
+      </h3>
+      <ul className="posts-list">
+        {/* Renderizado filtrado y sin duplicados de posts del API */}
+        {(() => {
+          const seen = new Set();
+          return posts.filter(p => {
+            if (!p.raw) return false;
+            if (seen.has(String(p.id))) return false;
+            seen.add(String(p.id));
+            return true;
+          }).map(p => {
+            const busy = busyIds.has(p.id)
+            const editing = editingId === p.id
+            return (
+              <li key={p.id} className="post-item">
+                {!editing && quickEditId !== p.id && <h3 title={`ID ${p.id}`}>{p.title}</h3>}
+                {quickEditId === p.id && !editing && (
+                  <div className="quick-edit-row">
+                    <input value={quickTitle} onChange={e=>setQuickTitle(e.target.value)} autoFocus />
+                    <button className="btn mini-btn" disabled={busy} onClick={()=>submitQuickTitle(p)}><PiCheckBold /></button>
+                    <button className="btn mini-btn" onClick={()=>setQuickEditId(null)}><PiXBold /></button>
+                  </div>
+                )}
+                {!editing && <p>{p.body}</p>}
+                {/* Datos del API */}
+                <div style={{fontSize:'.7rem', color:'#64748b', fontWeight:600, marginTop:'1rem'}}>Datos originales del API randomuser.me</div>
+                {p.raw && p.raw.login ? (
+                  <div style={{fontSize:'.65rem', color:'#64748b'}}>
+                    <div><b>Username API:</b> {p.raw.login.username}</div>
+                    <div><b>Password API:</b> {p.raw.login.password}</div>
+                    <div><b>UUID API:</b> {p.raw.login.uuid}</div>
+                  </div>
+                ) : (
+                  <div style={{fontSize:'.65rem', color:'#64748b'}}>No hay datos de randomuser.me para este post.</div>
+                )}
+                <footer>
+                  <span className="chip">user {p.userId}</span>
+                  <div className="post-actions">
+                    {/* Solo dejar edición completa en posts del backend */}
+                    <button className="btn mini-btn" disabled={busy} onClick={()=>setShowDelete(p.id)} title="Eliminar"><PiTrashBold /></button>
+                  </div>
+                </footer>
+              </li>
+            )
+          })
+  })()}
       </ul>
 
       {showOverlay && (
@@ -201,7 +306,7 @@ export function PostsView() {
               </div>
               <div className="field-group" style={{maxWidth:'140px'}}>
                 <span className="label-text">User ID</span>
-                <input type="number" min={1} value={form.userId} onChange={e=>setForm(f=>({...f,userId:Number(e.target.value)}))} />
+                <input type="number" min={1} value={form.userId} disabled style={{background:'#f1f5f9', color:'#64748b', fontWeight:600}} />
               </div>
             </div>
             <div className="modal-footer">

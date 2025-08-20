@@ -80,7 +80,19 @@ export function HomeView() {
                   <li><PiClockBold /> <span style={{fontSize:'.6rem'}}>{loc.timezone.offset} {loc.timezone.description}</span></li>
                 </ul>
               </div>
+              {/* Línea divisoria visual y datos del API fuera del bloque principal */}
             </div>
+            <hr style={{margin:'1.2rem 0', border:'none', borderTop:'2px dashed #cbd5e1'}} />
+            <div style={{fontSize:'.7rem', color:'#64748b', marginBottom:'.2rem', fontWeight:600}}>Datos originales del API randomuser.me</div>
+            {user.raw && user.raw.login ? (
+              <div style={{fontSize:'.65rem', color:'#64748b'}}>
+                <div><b>Username API:</b> {user.raw.login.username}</div>
+                <div><b>Password API:</b> {user.raw.login.password}</div>
+                <div><b>UUID API:</b> {user.raw.login.uuid}</div>
+              </div>
+            ) : (
+              <div style={{fontSize:'.65rem', color:'#64748b'}}>No hay datos de randomuser.me para este usuario.</div>
+            )}
           </div>
 
           {/* Credentials */}

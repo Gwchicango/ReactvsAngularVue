@@ -1,22 +1,45 @@
-// Servicio de autenticación (simulada) usando randomuser.me
+
 import { User } from '../models/User'
 
-// Obtiene un usuario candidato aleatorio
+const BASE_URL = 'http://localhost:3000'
+
+// Obtiene un usuario candidato aleatorio y lo registra en la BD
 export async function fetchRandomUserCandidate() {
   const res = await fetch('https://randomuser.me/api/')
   if (!res.ok) throw new Error('No se pudo obtener usuario')
   const data = await res.json()
   const rawUser = data.results?.[0]
-  return new User(rawUser)
+  const user = new User(rawUser)
+  // Registrar en backend
+  const regRes = await fetch(`${BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: user.username,
+      password: user.password,
+      email: user.email
+    })
+  })
+  if (!regRes.ok) {
+    const err = await regRes.json().catch(()=>({error:'Error'}))
+    throw new Error(err.error || 'Error registrando usuario en backend')
+  }
+  const dbUser = await regRes.json()
+  // Devuelve el user enriquecido con id real
+  return { ...user, id: dbUser.id, dbUser }
 }
 
-// Autentica de forma simulada validando username y contraseña simple.
-// Reglas mock: username debe coincidir con el candidato y password longitud >=4
+// Login real contra backend
 export async function authenticate(username, password, candidateUser) {
-  await new Promise(r => setTimeout(r, 400)) // simular latencia
-  if (!candidateUser) throw new Error('No hay usuario candidato seleccionado')
-  if (username !== candidateUser.username) throw new Error('Usuario incorrecto')
-  if (!password || password.length < 4) throw new Error('Password inválido (>=4)')
-  // Retornamos el usuario autenticado (en un caso real llegarían tokens)
-  return candidateUser
+  const res = await fetch(`${BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({error:'Error'}))
+    throw new Error(err.error || 'Credenciales incorrectas')
+  }
+  const user = await res.json()
+  return user
 }

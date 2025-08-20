@@ -1,3 +1,17 @@
+// PATCH parcial de post
+exports.patchPost = async (req, res) => {
+  try {
+    const [updated] = await Post.update(req.body, { where: { id: req.params.id } });
+    if (updated) {
+      const post = await Post.findByPk(req.params.id);
+      res.json(post);
+    } else {
+      res.status(404).json({ error: 'Post no encontrado' });
+    }
+  } catch (err) {
+    res.status(400).json({ error: 'Error al aplicar patch al post' });
+  }
+};
 
 const Post = require('../models/Post');
 const User = require('../models/User');

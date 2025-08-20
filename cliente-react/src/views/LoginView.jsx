@@ -30,8 +30,19 @@ export function LoginView({ candidate, onSuccess, large }) {
     e.preventDefault()
     setLoading(true); setError(null)
     try {
-      const user = await loginWithCredentials(username, password, candidate)
-      onSuccess(user)
+      const backendUser = await loginWithCredentials(username, password, candidate)
+      // Fusionar datos del backend y del candidato randomuser
+      const mergedUser = {
+        ...backendUser,
+        // Si candidate existe, agregamos datos visuales
+        ...(candidate ? {
+          name: candidate.name,
+          picture: candidate.picture,
+          raw: candidate.raw,
+          password: candidate.password
+        } : {})
+      }
+      onSuccess(mergedUser)
     } catch (err) {
       setError(err.message)
     } finally {
