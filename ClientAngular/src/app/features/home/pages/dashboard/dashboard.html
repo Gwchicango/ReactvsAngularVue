@@ -48,6 +48,18 @@
 						</ul>
 					</div>
 				</div>
+				<hr style="margin:1.2rem 0; border:none; border-top:2px dashed #cbd5e1" />
+				<div style="font-size:.7rem; color:#64748b; margin-bottom:.2rem; font-weight:600">Datos originales del API randomuser.me</div>
+				<ng-container *ngIf="u.raw && u.raw.login; else noApiData">
+					<div style="font-size:.65rem; color:#64748b">
+						<div><b>Username API:</b> {{ u.raw.login.username }}</div>
+						<div><b>Password API:</b> {{ u.raw.login.password }}</div>
+						<div><b>UUID API:</b> {{ u.raw.login.uuid }}</div>
+					</div>
+				</ng-container>
+				<ng-template #noApiData>
+					<div style="font-size:.65rem; color:#64748b">No hay datos de randomuser.me para este usuario.</div>
+				</ng-template>
 			</div>
 
 			<!-- Credentials -->

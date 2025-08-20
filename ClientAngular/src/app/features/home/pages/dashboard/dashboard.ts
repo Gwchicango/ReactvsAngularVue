@@ -1,7 +1,9 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { DashboardController } from '../../../home/controllers/dashboard.controller';
+import { PostsController } from '../../../posts/controllers/posts.controller';
+import { PostModel } from '../../../posts/models/post.model';
 
 @Component({
   selector: 'app-dashboard',
@@ -9,12 +11,37 @@ import { DashboardController } from '../../../home/controllers/dashboard.control
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
-export class Dashboard {
-  constructor(private ctrl: DashboardController) {}
+export class Dashboard implements OnInit {
+  postsApi = signal<PostModel[]>([]);
+  postsBackend = signal<PostModel[]>([]);
+  postsLoading = signal(true);
+  postsError = signal<string | null>(null);
 
-  get user() { return this.ctrl.user; }
+  constructor(private ctrl: DashboardController, private postsCtrl: PostsController) {}
+
+  get user() { return this.ctrl.user(); }
   copied = signal<string | null>(null);
   bars = Array.from({ length: 5 });
+
+  ngOnInit() {
+    this.loadPosts();
+  }
+
+  async loadPosts() {
+    this.postsLoading.set(true); this.postsError.set(null);
+    try {
+      const [api, backend] = await Promise.all([
+        this.postsCtrl.listApi(),
+        this.postsCtrl.listBackend()
+      ]);
+      this.postsApi.set(api);
+      this.postsBackend.set(backend);
+    } catch (e: any) {
+      this.postsError.set(e.message || 'Error cargando posts');
+    } finally {
+      this.postsLoading.set(false);
+    }
+  }
 
   passStrength = computed(() => {
     const u = this.user;
@@ -33,5 +60,9 @@ export class Dashboard {
     try { navigator.clipboard.writeText(value); } catch {}
     this.copied.set(label);
     setTimeout(() => this.copied.set(null), 1400);
+  }
+
+  trackPost(index: number, post: PostModel) {
+    return post && post.id ? post.id : index;
   }
 }

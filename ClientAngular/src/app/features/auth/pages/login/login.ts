@@ -57,11 +57,13 @@ export class Login {
   async generate() {
     this.loading.set(true);
     try {
-  const user = await this.auth.generateCandidate();
-  this.candidate.set(user);
-  // No prefill; usuario debe escribir o usar botón Auto completar
-  this.username.set('');
-  this.password.set('');
+      const user = await this.auth.generateCandidate();
+      this.candidate.set(user);
+      // No prefill; usuario debe escribir o usar botón Auto completar
+      this.username.set('');
+      this.password.set('');
+    } catch (e: any) {
+      this.error.set(e?.message || 'Error generando usuario');
     } finally { this.loading.set(false); }
   }
 
@@ -92,20 +94,19 @@ export class Login {
 
   async submit(evt: Event) {
     evt.preventDefault();
-  this.attempt.set(true);
+    this.attempt.set(true);
     this.error.set(null);
     const c = this.candidate();
     if (!c) { this.error.set('Genera un usuario primero'); return; }
-  if (!this.validUsername()) { this.error.set('Username no coincide'); return; }
-  if (!this.validPassword()) { this.error.set('Password no coincide'); return; }
-    // Simulate async login phase (could validate password strength etc)
+    if (!this.validUsername()) { this.error.set('Username no coincide'); return; }
+    if (!this.validPassword()) { this.error.set('Password no coincide'); return; }
     this.loading.set(true);
     try {
-      const user: DemoUser = { ...c, username: this.username(), password: this.password() };
-      this.auth.login(user);
+      // Login real contra backend
+      const user = await this.auth.authenticate(this.username(), this.password());
       this.router.navigateByUrl('/dashboard');
     } catch (e: any) {
-      this.error.set(e?.message || 'Error');
+      this.error.set(e?.message || 'Error de autenticación');
     } finally { this.loading.set(false); }
   }
 }

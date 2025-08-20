@@ -35,12 +35,16 @@
 		</div>
 	}
 
-	@if (!loading() && posts().length === 0) {
-		<p class="empty">Sin resultados.</p>
+	<!-- Backend Posts -->
+	<h3 class="divider" style="margin:1.8rem 0 .7rem; color:#fff; font-weight:800; font-size:1.35rem; background:linear-gradient(90deg,#334155 80%,#475569 100%); padding:10px 22px; border-radius:10px; box-shadow:0 2px 12px #33415522; letter-spacing:.5px; display:flex; align-items:center; gap:10px; text-shadow:0 2px 8px #0002;">
+		<span style="font-size:1.5em;opacity:.85;vertical-align:middle">🏠</span>
+		Tus Registros (Backend)
+	</h3>
+	@if (!loading() && postsBackend().length === 0) {
+		<p class="empty">Sin resultados en backend.</p>
 	}
-
 	<ul class="posts-list">
-		@for (p of posts(); track p.id) {
+		@for (p of postsBackend(); track p.id) {
 			<li class="post-item">
 				@if (!(editingId() === p.id) && !(quickEditId() === p.id)) {
 					<h3 [title]="'ID '+p.id">{{ p.title }}</h3>
@@ -78,6 +82,27 @@
 		}
 	</ul>
 
+	<!-- API Posts -->
+	<h3 class="divider" style="margin:1.8rem 0 .7rem; color:#fff; font-weight:800; font-size:1.35rem; background:linear-gradient(90deg,#64748b 80%,#94a3b8 100%); padding:10px 22px; border-radius:10px; box-shadow:0 2px 12px #64748b22; letter-spacing:.5px; display:flex; align-items:center; gap:10px; text-shadow:0 2px 8px #0002;">
+		<span style="font-size:1.5em;opacity:.85;vertical-align:middle">🌐</span>
+		Registros de API Externa
+	</h3>
+	@if (!loading() && postsApi().length === 0) {
+		<p class="empty">Sin resultados en API.</p>
+	}
+	<ul class="posts-list api-list">
+		@for (p of postsApi(); track p.id) {
+			<li class="post-item api-item">
+				<h3 [title]="'ID '+p.id">{{ p.title }}</h3>
+				<p>{{ p.body }}</p>
+				<footer>
+					<span class="chip">user {{ p.userId }}</span>
+					<span class="chip api-chip">API</span>
+				</footer>
+			</li>
+		}
+	</ul>
+
 	@if (showOverlay()) {
 		<div class="loading-overlay" role="status" aria-live="polite">
 			<div class="loader"></div>
@@ -88,29 +113,29 @@
 	@if (showCreateModal()) {
 		<div class="modal-backdrop" role="dialog" aria-modal="true" aria-label="Crear Post">
 			<form class="modal create-modal" (submit)="handleCreate($event)">
-				<div class="modal-header">
-					<h3>Nuevo Registro</h3>
-					<button type="button" class="btn mini-btn modal-close" (click)="closeCreate()">×</button>
+				<div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+					<h3 style="margin:0;font-size:1.2rem;font-weight:700;letter-spacing:.5px;color:#334155">Nuevo Registro</h3>
+					<button type="button" class="btn mini-btn modal-close" (click)="closeCreate()" style="font-size:1.2rem;">×</button>
 				</div>
-				<div class="create-modal-grid">
+				<div class="create-modal-grid" style="display:grid;gap:1.2rem;margin-top:1.2rem;">
 					<div class="field-group full">
 						<span class="label-text">Título</span>
-						<input placeholder="Título descriptivo" [value]="form().title" (input)="onCreateTitleInput($event)" required autofocus />
-						<div class="helper">Máx. 120 caracteres (demo, no validado)</div>
+						<input placeholder="Título descriptivo" [value]="form().title" (input)="onCreateTitleInput($event)" required autofocus style="font-size:1rem;padding:.5rem .7rem;border-radius:6px;border:1px solid #cbd5e1;" />
+						<div class="helper" style="font-size:.7rem;color:#64748b;">Máx. 120 caracteres (demo, no validado)</div>
 					</div>
 					<div class="field-group full">
 						<span class="label-text">Contenido</span>
-						<textarea placeholder="Escribe el cuerpo del post" [value]="form().body" (input)="onCreateBodyInput($event)" required></textarea>
-						<div class="helper">Puedes poner texto libre. JSONPlaceholder simula el guardado.</div>
+						<textarea placeholder="Escribe el cuerpo del post" [value]="form().body" (input)="onCreateBodyInput($event)" required style="font-size:1rem;padding:.5rem .7rem;border-radius:6px;border:1px solid #cbd5e1;"></textarea>
+						<div class="helper" style="font-size:.7rem;color:#64748b;">Puedes poner texto libre. JSONPlaceholder simula el guardado.</div>
 					</div>
 					<div class="field-group" style="max-width:140px">
 						<span class="label-text">User ID</span>
-						<input type="number" min="1" [value]="form().userId" (input)="onCreateUserIdInput($event)" />
+						<input type="number" min="1" [value]="form().userId" disabled style="background:#f1f5f9; color:#64748b; font-weight:600; border-radius:6px; border:1px solid #cbd5e1;" />
 					</div>
 				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn" (click)="closeCreate()">Cancelar</button>
-						<button class="btn btn-primary" [disabled]="creating()">{{ creating() ? 'Creando...' : 'Guardar' }}</button>
+				<div class="modal-footer" style="display:flex;justify-content:flex-end;gap:1rem;margin-top:1.5rem;">
+					<button type="button" class="btn" (click)="closeCreate()" style="background:#f1f5f9;color:#334155;">Cancelar</button>
+					<button class="btn btn-primary" [disabled]="creating()" style="background:#334155;color:#fff;">{{ creating() ? 'Creando...' : 'Guardar' }}</button>
 				</div>
 			</form>
 		</div>

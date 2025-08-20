@@ -1,7 +1,9 @@
-import { Component, signal, effect, OnInit, OnDestroy } from '@angular/core';
+
+import { Component, signal, effect, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PostsController } from '../../../posts/controllers/posts.controller';
 import { PostModel } from '../../../posts/models/post.model';
+import { AuthService } from '../../../../core/services/auth';
 
 interface FormState { title: string; body: string; userId: number; id?: number }
 
@@ -12,8 +14,9 @@ interface FormState { title: string; body: string; userId: number; id?: number }
   styleUrl: './posts-list.scss'
 })
 export class PostsList implements OnInit, OnDestroy {
+  postsBackend = signal<PostModel[]>([]);
+  postsApi = signal<PostModel[]>([]);
   // State signals (mirroring React state)
-  posts = signal<PostModel[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
   form = signal<FormState>({ title:'', body:'', userId:1 });
@@ -32,6 +35,7 @@ export class PostsList implements OnInit, OnDestroy {
 
   private debounceHandle: any;
 
+  private auth = inject(AuthService);
   constructor(private postsCtrl: PostsController) {
     // Effect to debounce searchTerm
     effect(() => {
@@ -44,10 +48,8 @@ export class PostsList implements OnInit, OnDestroy {
 
     // Effect to reload when filters change
     effect(() => {
-      // Track dependencies
       this.filterUser();
       this.debouncedSearch();
-      // Trigger load
       this.load();
     });
   }
@@ -58,18 +60,32 @@ export class PostsList implements OnInit, OnDestroy {
   async load() {
     this.loading.set(true); this.error.set(null); this.showOverlay.set(true);
     try {
-      let data: PostModel[];
+      let apiData: PostModel[] = [];
+      let backendData: PostModel[] = [];
       const search = this.debouncedSearch();
       const filter = this.filterUser();
+      const user = this.auth.user;
       if (search) {
-        data = await this.postsCtrl.searchTitle(search);
-        if (filter) data = data.filter(p => String(p.userId) === String(filter));
+        apiData = await this.postsCtrl.searchTitleApi(search);
+        backendData = await this.postsCtrl.searchTitleBackend(search);
+        if (filter) {
+          apiData = apiData.filter(p => String(p.userId) === String(filter));
+          backendData = backendData.filter(p => String(p.userId) === String(filter));
+        } else if (user?.id) {
+          backendData = backendData.filter(p => String(p.userId) === String(user.id));
+        }
       } else if (filter) {
-        data = await this.postsCtrl.listByUser(Number(filter));
+        apiData = await this.postsCtrl.byUserApi(Number(filter));
+        backendData = await this.postsCtrl.byUserBackend(Number(filter));
       } else {
-        data = await this.postsCtrl.listAll();
+        apiData = await this.postsCtrl.listApi();
+        backendData = await this.postsCtrl.listBackend();
+        if (user?.id) {
+          backendData = backendData.filter(p => String(p.userId) === String(user.id));
+        }
       }
-      this.posts.set(data);
+      this.postsApi.set(apiData);
+      this.postsBackend.set(backendData);
     } catch (e: any) {
       this.error.set(e.message || 'Error desconocido');
     } finally {
@@ -78,15 +94,21 @@ export class PostsList implements OnInit, OnDestroy {
     }
   }
 
-  openCreate() { this.showCreateModal.set(true); this.creating.set(false); }
+  openCreate() {
+    const user = this.auth.user;
+    this.form.set({ title: '', body: '', userId: user?.id ? Number(user.id) : 1 });
+    this.showCreateModal.set(true);
+    this.creating.set(false);
+  }
   closeCreate() { this.showCreateModal.set(false); }
 
+  // Crear solo en backend
   async handleCreate(ev: SubmitEvent) {
     ev.preventDefault();
     try {
       this.creating.set(true);
-      const newPost = await this.postsCtrl.create(this.form());
-      this.posts.update(list => [newPost, ...list]);
+      const newPost = await this.postsCtrl.createBackend(this.form());
+  this.postsBackend.update((list: PostModel[]) => [newPost, ...list]);
       const currentUserId = this.form().userId;
       this.form.set({ title:'', body:'', userId: currentUserId });
       this.showCreateModal.set(false);
@@ -94,7 +116,9 @@ export class PostsList implements OnInit, OnDestroy {
     finally { this.creating.set(false); }
   }
 
+  // Solo permitir editar posts del backend
   startEdit(p: PostModel) {
+    if (!this.isBackendPost(p)) return;
     this.editingId.set(p.id!);
     this.editForm.set({ id: p.id, title: p.title, body: p.body, userId: p.userId });
   }
@@ -103,12 +127,11 @@ export class PostsList implements OnInit, OnDestroy {
   async submitEdit() {
     const id = this.editingId();
     if (!id) return;
-    // Igual al patrón React: agregar busy inline, PUT y reemplazar
     this.busyIds.update(s => new Set([...s, id]));
     try {
-      const payload = { ...this.editForm() }; // asegurar copia completa
-      const updated = await this.postsCtrl.update(payload);
-      this.posts.update(list => list.map(p => p.id === updated.id ? updated : p));
+      const payload = { ...this.editForm() };
+      const updated = await this.postsCtrl.updateBackend(payload);
+  this.postsBackend.update((list: PostModel[]) => list.map((p: PostModel) => p.id === updated.id ? updated : p));
       this.editingId.set(null);
     } catch (e:any) {
       this.error.set(e.message || 'Error al actualizar');
@@ -117,33 +140,45 @@ export class PostsList implements OnInit, OnDestroy {
     }
   }
 
+  // Solo permitir patch en backend
   patchTitle(p: PostModel) {
+    if (!this.isBackendPost(p)) return;
     this.quickEditId.set(p.id!);
     this.quickTitle.set(p.title);
   }
 
   async submitQuickTitle(p: PostModel) {
+    if (!this.isBackendPost(p)) return;
     const title = this.quickTitle().trim();
     if (!title) { this.quickEditId.set(null); return; }
     const id = p.id!;
     try {
       this.addBusy(id);
-      const updated = await this.postsCtrl.patch(id, { title });
-      this.posts.update(list => list.map(x => x.id === id ? updated : x));
+      const updated = await this.postsCtrl.patchBackend(id, { title });
+  this.postsBackend.update((list: PostModel[]) => list.map((x: PostModel) => x.id === id ? updated : x));
     } catch (e: any) { this.error.set(e.message || 'Error en actualización parcial'); }
     finally { this.removeBusy(id); this.quickEditId.set(null); }
   }
 
+  // Solo permitir borrar en backend
   confirmDelete(id: number) { this.showDelete.set(id); }
   cancelDelete() { this.showDelete.set(null); }
 
   async del(id: number) {
     try {
       this.addBusy(id);
-      await this.postsCtrl.delete(id);
-      this.posts.update(list => list.filter(p => p.id !== id));
+      await this.postsCtrl.deleteBackend(id);
+  this.postsBackend.update((list: PostModel[]) => list.filter((p: PostModel) => p.id !== id));
     } catch (e: any) { this.error.set(e.message || 'Error al eliminar'); }
     finally { this.removeBusy(id); this.showDelete.set(null); }
+  }
+
+  // Utilidad para saber si un post es del backend
+  isBackendPost(p: PostModel) {
+    // Puedes ajustar la lógica según tu modelo real
+    // Por ejemplo, si los IDs del backend son mayores a 10000, o si tienen algún flag
+    // Aquí asumimos que si el post está en postsBackend, es del backend
+  return this.postsBackend().some((b: PostModel) => b.id === p.id);
   }
 
   dismissError() { this.error.set(null); }
