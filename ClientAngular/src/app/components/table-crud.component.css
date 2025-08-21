@@ -1,0 +1,186 @@
+/* Estilos personalizados para tabla tipo React */
+.custom-table-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 1.5rem 1rem;
+  margin-bottom: 2rem;
+  max-width: 100vw;
+  overflow-x: auto;
+  background: #1e293b !important;
+}
+.custom-table {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
+  min-width: 600px;
+  table-layout: auto;
+  background: transparent !important;
+  padding-top: 1.5rem;
+}
+.custom-table-thead th, .custom-th {
+  position: sticky;
+  top: 0;
+  background: #1e293b !important;
+  z-index: 2;
+  font-weight: 600;
+  font-size: 1rem;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+  color: #fff;
+}
+.custom-table-thead th:last-child, .custom-th:last-child {
+  border-right: none;
+}
+.custom-row {
+  transition: background 0.2s;
+  border-bottom: 2px solid #fff;
+}
+.custom-row:last-child {
+  border-bottom: none;
+}
+.custom-row:hover {
+  background: #334155 !important;
+}
+.custom-td {
+  vertical-align: middle !important;
+  font-size: 1rem;
+  background: transparent !important;
+  border-right: 2px solid #fff;
+  color: #fff;
+}
+.custom-td:last-child {
+  border-right: none;
+}
+.badge {
+  font-size: 0.95em;
+  padding: 0.5em 0.8em;
+  border-radius: 0.5em;
+}
+.badge.bg-warning {
+  background: #fde047 !important;
+  color: #7c5700 !important;
+}
+.badge.estado-disponible {
+  background: #22c55e !important; /* verde */
+  color: #fff !important;
+}
+.badge.estado-ocupada {
+  background: #f87171 !important; /* rojo */
+  color: #fff !important;
+}
+.badge.estado-mantenimiento {
+  background: #fbbf24 !important; /* amarillo */
+  color: #7c5700 !important;
+}
+.badge.estado-limpieza {
+  background: #38bdf8 !important; /* azul claro */
+  color: #fff !important;
+}
+.badge.estado-reservada {
+  background: #a78bfa !important; /* morado */
+  color: #fff !important;
+}
+.table-crud .d-flex.gap-2 > .btn:not(:last-child) {
+  margin-right: 10px;
+}
+.table-crud thead th {
+  padding-top: 2rem;
+}
+.table-crud {
+  width: 100%;
+  min-width: 700px;
+  border-radius: 0;
+  overflow: hidden;
+  /* border: 1.5px solid #e0e7ef; */
+  box-sizing: border-box;
+  background: transparent !important;
+}
+.table-crud th, .table-crud td {
+  vertical-align: middle;
+  font-size: 1rem;
+  background: transparent !important;
+  border-bottom: 1.5px solid #e0e7ef;
+  text-align: center;
+  color: #fff;
+}
+.table-crud thead th {
+  font-weight: 700;
+  background: #1e293b !important;
+  color: #fff;
+}
+.table-crud tbody tr {
+  transition: background 0.13s;
+}
+.table-crud tbody tr:hover {
+  background: #334155 !important;
+  color: #fff;
+}
+.table-crud .badge {
+  font-size: 0.78em;
+  font-weight: 600;
+  padding: 0.18em 0.65em;
+  border-radius: 0.8em;
+  letter-spacing: 0.2px;
+}
+.table-crud .btn {
+  min-width: 28px;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.18rem 0.45rem;
+  font-size: 0.98rem;
+}
+
+.table-crud .d-flex.gap-2 {
+  gap: 0.6rem;
+}
+
+.table-crud .btn i, .table-crud .btn svg {
+  font-size: 1.2em;
+  color: inherit;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* Estilos para el modal de confirmación de borrado */
+.tablecrud-modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.35);
+  z-index: 2000;
+}
+.tablecrud-modal-outer {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tablecrud-modal-card {
+  border-radius: 1.3rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+  background: #1e293b !important;
+  min-width: 340px;
+  max-width: 400px;
+  width: 100%;
+  position: relative;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  color: #fff;
+}
+.tablecrud-modal-header {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+.tablecrud-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.tablecrud-modal-btn {
+  min-width: 90px;
+}

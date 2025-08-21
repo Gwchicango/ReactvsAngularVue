@@ -111,6 +111,7 @@
     <nav class="nav-links" aria-label="Principal">
       <button type="button" routerLink="/dashboard" routerLinkActive="active" aria-label="Ir Dashboard" class="brand nav-btn">Home</button>
       <button type="button" routerLink="/posts" routerLinkActive="active" aria-label="Ir Posts" class="nav-btn">Registro</button>
+      <button type="button" routerLink="/rooms" routerLinkActive="active" aria-label="Ir Habitaciones" class="nav-btn">Habitaciones</button>
     </nav>
     <div class="user-box" *ngIf="user() as u">
       <span class="user-avatar" *ngIf="u.raw?.picture?.thumbnail">

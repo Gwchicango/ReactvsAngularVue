@@ -6,5 +6,10 @@ export const authGuard: CanActivateFn = (route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
   if (auth.user) return true;
+  // Checa localStorage directamente si el servicio no tiene usuario (solo en navegador)
+  if (typeof window !== 'undefined') {
+    const raw = localStorage.getItem('demo_user');
+    if (raw) return true;
+  }
   return router.parseUrl('/login');
 };
