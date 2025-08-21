@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate, Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useState } from 'react'
-import { PostsView } from './views/PostsView'
+import { RoomsView } from './views/RoomsView'
+import { GuestsView } from './views/GuestsView'
+import { ReservationsView } from './views/ReservationsView'
 import { LoginView } from './views/LoginView'
 import { RegisterView } from './views/RegisterView'
 import { HomeView } from './views/HomeView'
@@ -57,7 +59,9 @@ function Layout({ children }) {
         <div className="app-header-inner container flex justify-between items-center gap-md">
           <nav className="nav flex gap-md items-center">
             <NavLink to="/Home" className={({isActive})=>`brand ${isActive? 'btn-nav active':''}`}>HOME</NavLink>
-            <NavLink to="/posts" className={({isActive})=>`${isActive? 'btn-nav active':''}`}>REGISTRO</NavLink>
+            <NavLink to="/rooms" className={({isActive})=>`${isActive? 'btn-nav active':''}`}>HABITACIONES</NavLink>
+            <NavLink to="/guests" className={({isActive})=>`${isActive? 'btn-nav active':''}`}>HUÉSPEDES</NavLink>
+            <NavLink to="/reservations" className={({isActive})=>`${isActive? 'btn-nav active':''}`}>RESERVAS</NavLink>
           </nav>
           <div className="flex items-center gap-md" style={{fontSize:'.75rem'}}>
             {user?.picture && <img src={user.picture} width={34} height={34} style={{borderRadius:'50%'}} alt={user.name} />}
@@ -78,7 +82,9 @@ export default function App() {
   <Route path="/Home" element={<Protected><Layout><HomeView /></Layout></Protected>} />
   <Route path="/home" element={<Navigate to="/Home" replace />} />
   <Route path="/" element={<Navigate to="/Home" replace />} />
-      <Route path="/posts" element={<Protected><Layout><PostsView /></Layout></Protected>} />
+      <Route path="/rooms" element={<Protected><Layout><RoomsView /></Layout></Protected>} />
+      <Route path="/guests" element={<Protected><Layout><GuestsView /></Layout></Protected>} />
+      <Route path="/reservations" element={<Protected><Layout><ReservationsView /></Layout></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

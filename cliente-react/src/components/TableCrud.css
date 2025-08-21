@@ -1,0 +1,76 @@
+.badge.bg-warning {
+  background: #fde047 !important;
+  color: #7c5700 !important;
+}
+.table-crud .d-flex.gap-2 > .btn:not(:last-child) {
+  margin-right: 10px;
+}
+.table-crud thead th {
+  padding-top: 2rem;
+}
+.table-crud-wrapper {
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+  padding-left: 2.5vw;
+  padding-right: 2.5vw;
+  padding-top: 2.5rem;
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+.table-crud {
+  width: 100%;
+  min-width: 700px;
+  border-radius: 0;
+  overflow: hidden;
+  /* border: 1.5px solid #e0e7ef; */
+  box-sizing: border-box;
+}
+.table-crud th, .table-crud td {
+  vertical-align: middle;
+  font-size: 1rem;
+  background: transparent;
+  border-bottom: 1.5px solid #e0e7ef;
+  text-align: center;
+}
+.table-crud thead th {
+  font-weight: 700;
+  background: transparent;
+}
+.table-crud tbody tr {
+  transition: background 0.13s;
+}
+.table-crud tbody tr:hover {
+  background: #334155;
+  /* Azul oscuro, visible con letras blancas */
+}
+.table-crud .badge {
+  font-size: 0.78em;
+  font-weight: 600;
+  padding: 0.18em 0.65em;
+  border-radius: 0.8em;
+  letter-spacing: 0.2px;
+}
+.table-crud .btn {
+  min-width: 28px;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.18rem 0.45rem;
+  font-size: 0.98rem;
+}
+
+.table-crud .d-flex.gap-2 {
+  gap: 0.6rem;
+}
+
+.table-crud .btn i, .table-crud .btn svg {
+  font-size: 1.2em;
+  color: inherit;
+  vertical-align: middle;
+  line-height: 1;
+}
