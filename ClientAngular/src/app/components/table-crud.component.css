@@ -80,6 +80,23 @@
   background: #a78bfa !important; /* morado */
   color: #fff !important;
 }
+/* Estados de reservas */
+.badge.estado-pendiente {
+  background: #fde047 !important; /* amarillo (igual que mantenimiento) */
+  color: #7c5700 !important;
+}
+.badge.estado-confirmada {
+  background: #22c55e !important; /* verde (igual que disponible) */
+  color: #fff !important;
+}
+.badge.estado-cancelada {
+  background: #f87171 !important; /* rojo (igual que ocupada) */
+  color: #fff !important;
+}
+.badge.estado-finalizada {
+  background: #3b82f6 !important; /* azul (nuevo para finalizada) */
+  color: #fff !important;
+}
 .table-crud .d-flex.gap-2 > .btn:not(:last-child) {
   margin-right: 10px;
 }
