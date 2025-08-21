@@ -1,6 +1,7 @@
+
 # Backend Node/Express + MySQL
 
-Este backend provee autenticación de usuarios y gestión de posts para clientes Angular y React. Expone endpoints REST y utiliza MySQL como base de datos.
+Este backend provee autenticación de usuarios y gestión de posts, habitaciones, huéspedes y reservas para clientes Angular y React. Expone endpoints REST y utiliza MySQL como base de datos.
 
 ---
 
@@ -17,15 +18,14 @@ Este backend provee autenticación de usuarios y gestión de posts para clientes
    cd backend
    npm install
    ```
-2. Crea un archivo `.env` con la configuración de tu base de datos y JWT:
-   ```env
-   DB_HOST=localhost
-   DB_USER=tu_usuario
-   DB_PASSWORD=tu_password
-   DB_NAME=nombre_db
-   JWT_SECRET=alguna_clave_secreta
-   PORT=3001
-   ```
+2. Crea un archivo `.env` con la configuración de tu base de datos:
+  ```env
+  MYSQL_HOST=localhost
+  MYSQL_DATABASE=bd_registro
+  MYSQL_USER=root
+  MYSQL_PASSWORD=root
+  PORT=3001
+  ```
 
 ## 3. Scripts principales
 
@@ -41,21 +41,38 @@ Este backend provee autenticación de usuarios y gestión de posts para clientes
   - `POST /auth/login` — Login de usuario
 - **Posts:**
   - `GET /posts` — Lista todos los posts
-  - `GET /posts/:id` — Detalle de post
-  - `POST /posts` — Crear post (requiere auth)
-  - `PUT /posts/:id` — Editar post (requiere auth)
-  - `DELETE /posts/:id` — Eliminar post (requiere auth)
+  - `POST /posts` — Crear post
+  - `PUT /posts/:id` — Editar post
+  - `PATCH /posts/:id` — Patch parcial
+  - `DELETE /posts/:id` — Eliminar post
+- **Habitaciones (Rooms):**
+  - `GET /hotel/rooms` — Lista habitaciones
+  - `GET /hotel/rooms/:id` — Detalle habitación
+  - `POST /hotel/rooms` — Crear habitación
+  - `PUT /hotel/rooms/:id` — Editar habitación
+  - `DELETE /hotel/rooms/:id` — Eliminar habitación
+- **Huéspedes (Guests):**
+  - `GET /hotel/guests` — Lista huéspedes
+  - `GET /hotel/guests/:id` — Detalle huésped
+  - `POST /hotel/guests` — Crear huésped
+  - `PUT /hotel/guests/:id` — Editar huésped
+  - `DELETE /hotel/guests/:id` — Eliminar huésped
+- **Reservas (Reservations):**
+  - `GET /hotel/reservations` — Lista reservas
+  - `GET /hotel/reservations/:id` — Detalle reserva
+  - `POST /hotel/reservations` — Crear reserva
+  - `PUT /hotel/reservations/:id` — Editar reserva
+  - `DELETE /hotel/reservations/:id` — Eliminar reserva (solo si está cancelada o finalizada)
 
 ## 5. Variables de entorno
 
 El backend usa un archivo `.env` para configuración sensible. Ejemplo:
 
 ```env
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=1234
-DB_NAME=demo_db
-JWT_SECRET=supersecreto
+MYSQL_HOST=localhost
+MYSQL_DATABASE=bd_registro
+MYSQL_USER=root
+MYSQL_PASSWORD=root
 PORT=3001
 ```
 
@@ -71,37 +88,62 @@ PORT=3001
 
 ## 7. Base de datos
 
-- El backend espera una base de datos MySQL con las tablas `users` y `posts`.
-- Puedes usar el siguiente esquema básico:
+El backend espera una base de datos MySQL con las siguientes tablas:
 
 ```sql
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(50) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
-  email VARCHAR(100),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  email VARCHAR(100) NOT NULL UNIQUE
 );
 
 CREATE TABLE posts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   userId INT NOT NULL,
   title VARCHAR(255) NOT NULL,
-  body TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  body TEXT NOT NULL,
   FOREIGN KEY (userId) REFERENCES users(id)
+);
+
+CREATE TABLE rooms (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  number VARCHAR(20) NOT NULL UNIQUE,
+  type VARCHAR(50) NOT NULL,
+  capacity INT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'disponible'
+);
+
+CREATE TABLE guests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  document VARCHAR(50) NOT NULL UNIQUE,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  phone VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE reservations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  roomId INT NOT NULL,
+  guestId INT NOT NULL,
+  checkIn DATE NOT NULL,
+  checkOut DATE NOT NULL,
+  personas INT NOT NULL,
+  total DECIMAL(10,2) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pendiente',
+  FOREIGN KEY (roomId) REFERENCES rooms(id),
+  FOREIGN KEY (guestId) REFERENCES guests(id)
 );
 ```
 
 ## 8. Seguridad
 
-- Las contraseñas se almacenan hasheadas (bcrypt).
-- El login responde con JWT (expira en 1 día por defecto).
-- Los endpoints protegidos validan el token JWT.
+- Las contraseñas se almacenan hasheadas (bcryptjs).
+- El login responde con JWT (si lo implementas, agrega la lógica de generación y validación de tokens).
 
 ## 9. Desarrollo y pruebas
 
-- Usa `npm run dev` para desarrollo (hot reload con nodemon).
+- Usa `npm start` para desarrollo.
 - Puedes probar los endpoints con Postman, Thunder Client o similar.
 
 ## 10. Notas

@@ -1,6 +1,7 @@
+
 # ClientAngular
 
-Aplicación de ejemplo en Angular 20 que demuestra un patrón de capas sencillo: vista → controller (fachada) → service (API) → modelo, más autenticación con guard, layout adaptable y manejo de estado local con *signals*.
+Aplicación de ejemplo en Angular 20 con autenticación, CRUD de posts, habitaciones, huéspedes y reservas, layout adaptable, manejo de estado local con *signals* y rutas protegidas. Integra un backend Node/Express propio para toda la gestión de datos.
 
 ---
 
@@ -57,14 +58,17 @@ npm run serve:ssr:ClientAngular
 ```
 src/app/
 	core/
-		services/        # Servicios compartidos (Auth, Posts)
+		services/        # Servicios compartidos (Auth, Hotel: rooms, guests, reservations)
 		guards/          # Guards de routing (authGuard)
 	features/
-		auth/            # Dominio autenticación (página Login)
-		home/            # Dashboard (vista ligera)
-		posts/           # CRUD de posts (vista rica + controller + modelo)
+		auth/            # Login y registro
+		home/            # Dashboard
+		posts/           # CRUD de posts
+		rooms/           # CRUD de habitaciones
+		guests/          # CRUD de huéspedes
+		reservations/    # CRUD de reservas
 	shared/
-		components/      # Componentes reutilizables (modal, etc.)
+		components/      # Componentes reutilizables (modal, tabla, etc.)
 		ui/              # UI pequeñas (skeleton-card)
 	app.*              # Root component + rutas (Layout principal)
 ```
@@ -80,14 +84,15 @@ src/app/
 ### Layout
 El componente raíz `App` actúa de Layout: header con navegación, avatar, botón de logout y `<router-outlet>`. Oculta el header en `/login` para una experiencia enfocada.
 
-### Vista → Controller → Service → Modelo (Posts)
-- Vista: `PostsList` concentra estado de UI (búsqueda con debounce, formularios, edición rápida, ids ocupados, overlays, modales) usando *signals*.
-- Controller: `PostsController` es una fachada que desacopla la vista del servicio (punto para agregar reglas, caching, composición futura).
-- Service: `PostsService` encapsula las llamadas fetch a JSONPlaceholder (GET/POST/PUT/PATCH/DELETE) y filtra búsqueda local.
-- Modelos: `PostEntity` (forma de la API) y `PostModel` (alias/extendido para UI si se requiere). 
+
+### Vista → Controller → Service → Modelo (Posts, Rooms, Guests, Reservations)
+- Vista: Cada feature (PostsList, RoomsComponent, GuestsComponent, ReservationsComponent) concentra estado de UI y lógica de interacción.
+- Service: `PostsService` y `HotelService` encapsulan llamadas a la API (backend propio y externas).
+- Modelos: Entidades tipadas para cada dominio.
+
 
 ### Dashboard
-`Dashboard` es una vista ligera: sólo lee usuario a través de `DashboardController` y muestra datos (incluye barra de fuerza de contraseña). 
+`Dashboard` es una vista ligera: muestra datos del usuario autenticado y resumen de entidades (habitaciones, huéspedes, reservas, posts).
 
 ## 7. Flujo de autenticación (detalle)
 1. Usuario abre `/login`.
@@ -136,30 +141,32 @@ Se incluyen atributos `aria-label` en navegación y uso de botones correctos par
 - JSONPlaceholder API: https://jsonplaceholder.typicode.com
 - Random User API: https://randomuser.me
 
-## 16. Integración con Backend propio
 
-La aplicación Angular está integrada con un backend Node/Express propio para autenticación y gestión de posts, además de consumir la API pública randomuser.me y JSONPlaceholder.
+## 16. Integración con Backend propio y gestión hotelera
 
-- **Autenticación:**
-  - El login y registro de usuario se realiza contra el backend (`/auth/register`, `/auth/login`).
-  - Al generar un usuario, primero se obtiene un candidato desde randomuser.me y luego se registra automáticamente en el backend.
-  - El backend devuelve el usuario con su `id` propio, que se usa para asociar los posts locales.
+La aplicación Angular está integrada con un backend Node/Express propio para:
+- Autenticación de usuarios (`/auth/register`, `/auth/login`)
+- CRUD de posts
+- CRUD de habitaciones (`/hotel/rooms`)
+- CRUD de huéspedes (`/hotel/guests`)
+- CRUD de reservas (`/hotel/reservations`)
 
-- **Posts:**
-  - Los posts pueden provenir tanto del backend propio como de la API externa (JSONPlaceholder).
-  - Los registros locales (backend) se filtran automáticamente por el usuario logueado.
-  - Al crear un post, el `userId` se asigna automáticamente con el id del usuario autenticado.
+### Ejemplo de uso de features hoteleros
+- Menú de navegación permite acceder a Rooms, Guests y Reservations.
+- Cada módulo permite alta, edición, borrado y listado de entidades.
+- Las reservas calculan automáticamente el total (personas × 50) y validan capacidad y fechas.
+- Los estados de habitaciones y reservas se muestran con badges de color.
 
-- **Configuración de URLs:**
-  - Las URLs del backend y de las APIs externas están definidas en los archivos de entorno (`src/environments/environment.ts`).
-  - Puedes cambiar la URL del backend para apuntar a tu servidor local o remoto según el entorno.
+### Configuración de URLs
+- Las URLs del backend están en `src/environments/environment.ts`.
+- Puedes cambiar la URL para apuntar a tu servidor local o remoto.
 
-- **Flujo resumido:**
-  1. Usuario se registra/loguea → backend valida y responde con datos + id.
-  2. Dashboard y posts usan ese id para mostrar y crear registros asociados.
-  3. Los datos enriquecidos del usuario (perfil randomuser) se muestran en dashboard y nav si están disponibles.
+### Flujo resumido
+1. Usuario se registra/loguea → backend valida y responde con datos + id.
+2. Dashboard y features usan ese id para mostrar y crear registros asociados.
+3. Rooms, Guests y Reservations permiten gestión completa desde la UI.
 
-> Para más detalles sobre el backend, revisa la carpeta correspondiente en el monorepo o el README del backend.
+> Para más detalles sobre el backend y los endpoints, revisa la carpeta correspondiente en el monorepo o el README del backend.
 
 ---
 

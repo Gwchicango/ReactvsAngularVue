@@ -1,6 +1,6 @@
-# Cliente React (Arquitectura MVC Adaptada)
+# Cliente React (MVC Adaptado + Gestión Hotelera)
 
-Aplicación SPA construida con Vite + React + React Router. Implementa un patrón MVC adaptado al frontend (Models / Services / Controllers / Views) y un contexto de autenticación ligero. Permite: autenticación simulada, listado, búsqueda, filtrado, creación, edición (total y parcial) y eliminación (simulada) de posts contra la API pública JSONPlaceholder.
+SPA construida con Vite + React + React Router. Implementa un patrón MVC adaptado al frontend (Models / Services / Controllers / Views) y un contexto de autenticación ligero. Permite autenticación, gestión de posts, habitaciones, huéspedes y reservas, todo integrado con un backend Node/Express propio.
 
 ## 1. Requisitos Previos
 - Node.js >= 18 (se recomienda LTS)
@@ -34,26 +34,34 @@ npm run lint
 ## 3. Estructura de Directorios
 ```
 src/
-	assets/                # Imágenes / SVG
-	context/
-		AuthContext.jsx      # Estado global de sesión (login/logout)
-	controllers/
-		authController.js    # Lógica orquestadora auth
-		postController.js    # Lógica orquestadora posts
-	models/
-		User.js              # Modelo de usuario
-		Post.js              # Modelo de post
-	services/
-		authService.js       # Llamadas HTTP relacionadas con auth (simuladas / random user)
-		postService.js       # Acceso HTTP a JSONPlaceholder
-	views/
-		LoginView.jsx        # Pantalla de login
-		UserGeneratorView.jsx# Generador de usuario candidato
-		HomeView.jsx         # Vista de inicio tras login
-		PostsView.jsx        # Vista CRUD de posts
-		*.css                # Estilos por vista
-	App.jsx                # Rutas + layout + protección
-	main.jsx               # Bootstrap ReactDOM / Router
+  assets/                # Imágenes / SVG
+  context/
+    AuthContext.jsx      # Estado global de sesión (login/logout)
+  controllers/
+    authController.js    # Lógica auth
+    postController.js    # Lógica posts
+    hotelController.js   # Lógica habitaciones, huéspedes, reservas
+  models/
+    User.js              # Modelo de usuario
+    Post.js              # Modelo de post
+  services/
+    authService.js       # Llamadas HTTP relacionadas con auth
+    postService.js       # Acceso HTTP a JSONPlaceholder
+    hotelService.js      # Acceso HTTP a backend hotel (rooms, guests, reservations)
+  views/
+    LoginView.jsx        # Pantalla de login
+    UserGeneratorView.jsx# Generador de usuario candidato
+    HomeView.jsx         # Vista de inicio tras login
+    PostsView.jsx        # CRUD de posts
+    RoomsView.jsx        # CRUD de habitaciones
+    GuestsView.jsx       # CRUD de huéspedes
+    ReservationsView.jsx # CRUD de reservas
+    *.css                # Estilos por vista
+  components/
+    TableCrud.jsx        # Tabla reutilizable
+    ModalForm.jsx        # Modal reutilizable
+  App.jsx                # Rutas + layout + protección
+  main.jsx               # Bootstrap ReactDOM / Router
 index.css                # Design system base
 vite.config.*            # Configuración Vite
 eslint.config.js         # Config ESLint
@@ -62,27 +70,23 @@ tsconfig.json            # Config TS (JS allowed, TS incremental posible)
 
 ## 4. Arquitectura (MVC Adaptado)
 - Models: Clases simples (`Post`, `User`) que encapsulan y normalizan la forma de los datos.
-- Services: Aislan la capa HTTP (endpoints, query params, manejo de errores). Devuelven instancias de modelos.
+- Services: Aíslan la capa HTTP (auth, posts, hotel). Devuelven instancias de modelos.
 - Controllers: Validaciones ligeras, orquestan varios services, exponen funciones puras para las vistas.
 - Views: Componentes React de página que manejan estado de interacción (formularios, loaders, edición) y llaman controllers.
 - Context: `AuthContext` actúa como mini store global (sesión) y se consulta en componentes y rutas protegidas.
 
-Beneficio: cambiar endpoints solo toca services, añadir reglas de negocio se concentra en controllers, y la UI se mantiene enfocada en presentación.
-
 ## 5. Flujo Funcional
-Login → Home → Posts.
+Login → Home → Posts / Rooms / Guests / Reservations.
 1. Usuario ingresa a `/auth`: genera candidato y hace login (sesión se guarda en contexto).
 2. Se redirige a `/Home` (ruta protegida). `Protected` evita acceso directo a rutas sin sesión.
-3. En `/posts`, la vista carga posts (lista completa) llamando controller → service → API → modelos.
-4. Búsqueda usa debounce (420ms) para reducir peticiones. Filtros y refresh reutilizan la misma función `load()`.
-5. Crear / Editar / Patch / Delete actualizan estado local y muestran feedback (busy ids, overlays, banners de error).
+3. En `/posts`, `/rooms`, `/guests`, `/reservations` se cargan y gestionan entidades vía controllers/services/backend.
+4. Búsqueda, filtros y validaciones en cada módulo. Las reservas calculan automáticamente el total (personas × 50) y validan capacidad y fechas.
+5. Crear / Editar / Eliminar actualizan estado local y muestran feedback inmediato.
 
-## 6. API Consumida
-JSONPlaceholder: https://jsonplaceholder.typicode.com
-- GET /posts (se obtiene listado completo sin límite por defecto)
-- GET /posts?userId=ID (filtro)
-- GET /posts?title_like=texto (búsqueda por título)
-- POST /posts, PUT /posts/:id, PATCH /posts/:id, DELETE /posts/:id (operaciones simuladas; la API no persiste realmente, se mantiene coherencia en estado local).
+## 6. APIs Consumidas
+- JSONPlaceholder: https://jsonplaceholder.typicode.com (posts)
+- randomuser.me: https://randomuser.me (usuarios demo)
+- Backend propio: http://localhost:3000 (auth, posts, rooms, guests, reservations)
 
 ## 7. Estado y Rendimiento
 - Debounce de búsqueda: minimiza llamadas.
@@ -100,11 +104,17 @@ lint      -> eslint .
 ```
 
 ## 9. Configuración / Variables
-No se requieren variables de entorno. Si se quisiera cambiar la API base, editar `BASE_URL` en `postService.js`.
+Variables de entorno en `.env`:
+```
+VITE_API_URL=https://randomuser.me
+VITE_API_URL_POST=https://jsonplaceholder.typicode.com
+VITE_BACKEND_URL=http://localhost:3000
+```
+Puedes cambiar la URL del backend para apuntar a tu servidor local o remoto.
 
 ## 10. Estilos
 - `index.css`: design tokens (colores, radios, sombras, tipografía) + utilidades.
-- CSS modular por vista (ej: `posts.css`) para estilos específicos.
+- CSS modular por vista (ej: `posts.css`, `RoomsView.css`, etc) para estilos específicos.
 - Modo claro/oscuro usando `prefers-color-scheme`.
 
 ## 11. Accesibilidad y UX
@@ -119,7 +129,7 @@ Pendiente. Recomendado: Jest + React Testing Library. Priorizar tests de service
 - Paginación real (parámetros `_page` y `_limit`).
 - Persistencia de sesión (localStorage o cookies seguras).
 - Manejo centralizado de errores/toasts.
-- Capa de hooks (`usePosts`) para encapsular lógica de datos.
+- Capa de hooks (`usePosts`, `useRooms`, etc) para encapsular lógica de datos.
 - Migración gradual a TypeScript estricto.
 - Pruebas E2E (Playwright o Cypress).
 
@@ -134,27 +144,28 @@ Pendiente. Recomendado: Jest + React Testing Library. Priorizar tests de service
 ## 15. Licencia
 Uso educativo / demo. 
 
-## 16. Integración con Backend propio
+## 16. Integración con Backend propio y gestión hotelera
 
-La app React está integrada con un backend Node/Express propio para autenticación y gestión de posts, además de consumir la API pública randomuser.me y JSONPlaceholder.
+La app React está integrada con un backend Node/Express propio para:
+- Autenticación de usuarios (`/auth/register`, `/auth/login`)
+- CRUD de posts
+- CRUD de habitaciones (`/hotel/rooms`)
+- CRUD de huéspedes (`/hotel/guests`)
+- CRUD de reservas (`/hotel/reservations`)
 
-- **Autenticación:**
-  - El login y registro de usuario se realiza contra el backend (`/auth/register`, `/auth/login`).
-  - Al generar un usuario, primero se obtiene un candidato desde randomuser.me y luego se registra automáticamente en el backend.
-  - El backend devuelve el usuario con su `id` propio, que se usa para asociar los posts locales.
+### Ejemplo de uso de features hoteleros
+- Menú de navegación permite acceder a Rooms, Guests y Reservations.
+- Cada módulo permite alta, edición, borrado y listado de entidades.
+- Las reservas calculan automáticamente el total (personas × 50) y validan capacidad y fechas.
+- Los estados de habitaciones y reservas se muestran con badges de color.
 
-- **Posts:**
-  - Los posts pueden provenir tanto del backend propio como de la API externa (JSONPlaceholder).
-  - Los registros locales (backend) se filtran automáticamente por el usuario logueado.
-  - Al crear un post, el `userId` se asigna automáticamente con el id del usuario autenticado.
+### Configuración de URLs
+- Las URLs del backend están en `.env`.
+- Puedes cambiar la URL para apuntar a tu servidor local o remoto.
 
-- **Configuración de URLs:**
-  - Las URLs del backend y de las APIs externas están definidas en variables de entorno `.env` (ej: `VITE_BACKEND_URL`, `VITE_API_URL`).
-  - Puedes cambiar la URL del backend para apuntar a tu servidor local o remoto según el entorno.
+### Flujo resumido
+1. Usuario se registra/loguea → backend valida y responde con datos + id.
+2. Home y features usan ese id para mostrar y crear registros asociados.
+3. Rooms, Guests y Reservations permiten gestión completa desde la UI.
 
-- **Flujo resumido:**
-  1. Usuario se registra/loguea → backend valida y responde con datos + id.
-  2. Home y posts usan ese id para mostrar y crear registros asociados.
-  3. Los datos enriquecidos del usuario (perfil randomuser) se muestran en Home y nav si están disponibles.
-
-> Para más detalles sobre el backend, revisa la carpeta correspondiente en el monorepo o el README del backend.
+> Para más detalles sobre el backend y los endpoints, revisa la carpeta correspondiente en el monorepo o el README del backend.
